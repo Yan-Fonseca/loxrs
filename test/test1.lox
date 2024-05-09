@@ -1,0 +1,8 @@
+/*
+ * Calculating the circles area
+ * param {radius  double} 
+*/
+
+fun circles_area(radius) {
+    return radius * 3.14;
+}

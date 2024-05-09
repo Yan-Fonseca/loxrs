@@ -82,6 +82,13 @@ impl Scanner {
                         self.advance();
                     }
                 }
+                else if self.match_next('*') {
+                    while (self.peek() != '*' || self.peek_next() != '/') && !self.is_at_end() {
+                        self.advance();
+                    }
+                    self.advance();
+                    self.advance();
+                }
                 else {
                     self.add_token(TokenType::Slash);
                 }
@@ -245,7 +252,6 @@ impl Scanner {
     }
 
     fn advance(&mut self) -> char {
-        //self.current += 1;
         let character: Option<char> = self.source.chars().nth(self.current as usize);
         self.current += 1;
 
