@@ -1,8 +1,8 @@
 /*
  * Calculating the circles area
- * param {radius  double} 
+ * @param {radius : double} 
 */
 
 fun circles_area(radius) {
-    return radius * 3.14;
+    return radius * radius * 3.14;
 }
