@@ -1,16 +1,20 @@
-use std::fmt::format;
-
 use crate::token_type::TokenType;
+
+#[derive(Debug)]
+pub enum LiteralPossibleValues {
+    StringValue(String),
+    DoubleValue(f64),
+}
 
 pub struct Token {
     token_type: TokenType,
     lexeme: String,
     line: i32,
-    literal: Box<dyn std::any::Any>,
+    literal: Option<LiteralPossibleValues>,
 }
 
 impl Token {
-    fn new(token_type: TokenType, lexeme: String, literal: Box<dyn std::any::Any>, line: i32) -> Self {
+    pub fn new(token_type: TokenType, lexeme: String, literal: Option<LiteralPossibleValues>, line: i32) -> Self {
         Token {
             token_type,
             lexeme,
@@ -19,7 +23,7 @@ impl Token {
         }
     }
 
-    fn to_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         let type_ = match &self.token_type {
             TokenType::LeftParen => "LeftParen",
             TokenType::RightParen => "RightParen",

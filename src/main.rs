@@ -1,13 +1,13 @@
 pub mod token;
 pub mod token_type;
+pub mod scanner;
+pub mod error_hadling;
 
 use std::env;
 use std::io;
 use std::io::Write;
 use std::fs;
 use std::str;
-
-static mut HAD_ERROR: bool = false;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -33,7 +33,7 @@ fn run_file(path: &str) -> io::Result<()> {
     run(content);
 
     unsafe {
-        if HAD_ERROR {
+        if error_hadling::HAD_ERROR {
             std::process::exit(0);
         }
     }
@@ -67,7 +67,7 @@ fn run_prompt() {
                 run(input);
 
                 unsafe {
-                    HAD_ERROR = false;
+                    error_hadling::HAD_ERROR = false;
                 }
             },
             Err(error) => {
@@ -83,17 +83,5 @@ fn run(input: &str) {
 
     for token in tokens {
         println!("{:?}", token);
-    }
-}
-
-
-fn error(line: i32, message: &str) {
-    report(line, "", message);
-}
-
-fn report(line: i32, where_err: &str, message: &str) {
-    println!("[line {}] Error {} : {}", line, where_err, message);
-    unsafe {
-        HAD_ERROR = true;
     }
 }
