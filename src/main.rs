@@ -9,6 +9,8 @@ use std::io::Write;
 use std::fs;
 use std::str;
 
+use scanner::Scanner;
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -79,9 +81,13 @@ fn run_prompt() {
 }
 
 fn run(input: &str) {
-    let tokens: Vec<&str> = input.split_whitespace().collect();
+    let mut scanner = Scanner::new(input.to_string());
+
+    let tokens = scanner.scan_tokens();
+
+    println!("número de Tokens: {}", tokens.len());
 
     for token in tokens {
-        println!("{:?}", token);
+        println!("{}",token.to_string());
     }
 }

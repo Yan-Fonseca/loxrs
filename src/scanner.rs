@@ -2,9 +2,8 @@ use crate::token::{LiteralPossibleValues, Token};
 use crate::token_type::TokenType;
 use crate::error_hadling::*;
 use std::collections::HashMap;
-use std::hash::Hash;
 
-struct Scanner {
+pub struct Scanner {
     source: String,
     tokens: Vec<Token>,
     start: i32,
@@ -88,6 +87,8 @@ impl Scanner {
                 }
             },
 
+            '"' => self.string(),
+
             ' ' => {},
             '\t' => {},
             '\r' => {},
@@ -102,7 +103,7 @@ impl Scanner {
                     self.identifier();
                 }
                 else {
-                    error(self.line, "Unexpected character.");
+                    error(self.line, format!("Unexpected character: {}", character).as_str());
                 }
             },
         }
@@ -148,7 +149,7 @@ impl Scanner {
     }
 
     fn string(&mut self) {
-        while self.peek() != '=' && !self.is_at_end() {
+        while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
                 self.line += 1;
             }
@@ -207,7 +208,7 @@ impl Scanner {
             return '\0';
         }
         else {
-            let character = self.source.chars().nth(self.current as usize);
+            let character = self.source.chars().nth((self.current + 1) as usize);
 
             if let Some(value) = character {
                 return value;
@@ -240,12 +241,14 @@ impl Scanner {
     }
 
     fn is_at_end(&self) -> bool {
-        self.current >= self.tokens.len() as i32
+        self.current >= self.source.len() as i32
     }
 
     fn advance(&mut self) -> char {
-        self.current += 1;
+        //self.current += 1;
         let character: Option<char> = self.source.chars().nth(self.current as usize);
+        self.current += 1;
+
         match character {
             Some(a) => a,
             None => '\0'
