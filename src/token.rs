@@ -1,11 +1,12 @@
 use crate::token_type::TokenType;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum LiteralPossibleValues {
     StringValue(String),
     DoubleValue(f64),
 }
 
+#[derive(Clone)]
 pub struct Token {
     token_type: TokenType,
     lexeme: String,
@@ -21,6 +22,22 @@ impl Token {
             literal,
             line,
         }
+    }
+
+    pub fn getTokenType(&self) -> TokenType {
+        self.token_type.clone()
+    }
+
+    pub fn getLexeme(&self) -> String {
+        self.lexeme.clone()
+    }
+
+    pub fn getLine(&self) -> i32 {
+        self.line
+    }
+
+    pub fn getLiteral(&self) -> Option<LiteralPossibleValues> {
+        self.literal.clone()
     }
 
     pub fn to_string(&self) -> String {

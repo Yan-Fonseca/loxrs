@@ -2,6 +2,8 @@ pub mod token;
 pub mod token_type;
 pub mod scanner;
 pub mod error_hadling;
+pub mod expr;
+pub mod ast_printer;
 
 use std::env;
 use std::io;
