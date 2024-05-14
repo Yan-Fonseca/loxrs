@@ -1,5 +1,5 @@
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum TokenType {
     // Single Characters
     LeftParen, RightParen, LeftBrace, RightBrace,

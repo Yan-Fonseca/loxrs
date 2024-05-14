@@ -4,6 +4,7 @@ pub mod scanner;
 pub mod error_hadling;
 pub mod expr;
 pub mod ast_printer;
+pub mod parser;
 
 use std::env;
 use std::io;

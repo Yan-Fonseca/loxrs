@@ -1,4 +1,4 @@
-use crate::token::{Token};
+use crate::token::Token;
 
 #[derive(Clone)]
 pub enum Expr {
@@ -17,7 +17,7 @@ pub struct Binary {
 }
 
 impl Binary {
-    fn new(left: Box<Expr>, operator: Token, right: Box<Expr>) -> Self {
+    pub fn new(left: Box<Expr>, operator: Token, right: Box<Expr>) -> Self {
         Binary {
             left,
             operator,
@@ -45,7 +45,7 @@ pub struct Unary {
 }
 
 impl Unary {
-    fn new(operator: Token, expression: Box<Expr>) -> Self {
+    pub fn new(operator: Token, expression: Box<Expr>) -> Self {
         Unary {
             operator,
             expression
@@ -67,7 +67,7 @@ pub struct Operator {
 }
 
 impl Operator {
-    fn new(operator: Token) -> Self {
+    pub fn new(operator: Token) -> Self {
         Operator {
             operator
         }
@@ -76,17 +76,13 @@ impl Operator {
 
 #[derive(Clone)]
 pub struct Grouping {
-    left: Token,
     expression: Box<Expr>,
-    right: Token,
 }
 
 impl Grouping {
-    fn new(left: Token, expression: Box<Expr>, right: Token) -> Self {
+    pub fn new(expression: Box<Expr>) -> Self {
         Grouping {
-            left,
             expression,
-            right
         }
     }
 
@@ -101,7 +97,7 @@ pub struct Literal {
 }
 
 impl Literal {
-    fn new(value: Token) -> Self {
+    pub fn new(value: Token) -> Self {
         Literal {
             value
         }
