@@ -12,6 +12,8 @@ use std::io::Write;
 use std::fs;
 use std::str;
 
+use ast_printer::AstPrinter;
+use parser::Parser;
 use scanner::Scanner;
 
 fn main() {
@@ -88,9 +90,16 @@ fn run(input: &str) {
 
     let tokens = scanner.scan_tokens();
 
-    println!("número de Tokens: {}", tokens.len());
+    let mut parser = Parser::new(tokens.to_vec());
 
-    for token in tokens {
-        println!("{}",token.to_string());
+    let expression = parser.parser();
+
+    match expression {
+        Some(val) => {
+            let ast = AstPrinter::new();
+            ast.print(val);
+        },
+        None => {println!("Ocorreu algum erro no processo!")}
     }
+    
 }

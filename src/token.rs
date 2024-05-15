@@ -24,19 +24,19 @@ impl Token {
         }
     }
 
-    pub fn getTokenType(&self) -> TokenType {
+    pub fn get_token_type(&self) -> TokenType {
         self.token_type.clone()
     }
 
-    pub fn getLexeme(&self) -> String {
+    pub fn get_lexeme(&self) -> String {
         self.lexeme.clone()
     }
 
-    pub fn getLine(&self) -> i32 {
+    pub fn get_line(&self) -> i32 {
         self.line
     }
 
-    pub fn getLiteral(&self) -> Option<LiteralPossibleValues> {
+    pub fn get_literal(&self) -> Option<LiteralPossibleValues> {
         self.literal.clone()
     }
 

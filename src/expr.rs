@@ -6,7 +6,6 @@ pub enum Expr {
     Grouping(Option<Grouping>),
     Unary(Option<Unary>),
     Binary(Option<Binary>),
-    Operator(Option<Operator>)
 }
 
 #[derive(Clone)]
@@ -25,15 +24,15 @@ impl Binary {
         }
     }
 
-    pub fn getLeft(&self) -> Box<Expr> {
+    pub fn get_left(&self) -> Box<Expr> {
         self.left.clone()
     }
 
-    pub fn getOperator(&self) -> Token {
+    pub fn get_operator(&self) -> Token {
         self.operator.clone()
     }
 
-    pub fn getRight(&self) -> Box<Expr> {
+    pub fn get_right(&self) -> Box<Expr> {
         self.right.clone()
     }
 }
@@ -52,25 +51,12 @@ impl Unary {
         }
     }
 
-    pub fn getOperator(&self) -> Token {
+    pub fn get_operator(&self) -> Token {
         self.operator.clone()
     }
 
-    pub fn getExpression(&self) -> Box<Expr> {
+    pub fn get_expression(&self) -> Box<Expr> {
         self.expression.clone()
-    }
-}
-
-#[derive(Clone)]
-pub struct Operator {
-    operator: Token,
-}
-
-impl Operator {
-    pub fn new(operator: Token) -> Self {
-        Operator {
-            operator
-        }
     }
 }
 
@@ -86,7 +72,7 @@ impl Grouping {
         }
     }
 
-    pub fn getExpression(&self) -> Box<Expr> {
+    pub fn get_expression(&self) -> Box<Expr> {
         self.expression.clone()
     }
 }
@@ -103,7 +89,7 @@ impl Literal {
         }
     }
 
-    pub fn getValue(&self) -> Token {
+    pub fn get_value(&self) -> Token {
         self.value.clone()
     }
 }
