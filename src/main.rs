@@ -5,6 +5,7 @@ pub mod error_hadling;
 pub mod expr;
 pub mod ast_printer;
 pub mod parser;
+pub mod interpreter;
 
 use std::env;
 use std::io;
