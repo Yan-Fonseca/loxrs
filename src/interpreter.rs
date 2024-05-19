@@ -1,4 +1,4 @@
-use crate::{error_hadling::parser_error, expr::*, token::{LiteralPossibleValues, Token}, token_type::TokenType};
+use crate::{error_hadling::{parser_error, runtime_error}, expr::*, token::{LiteralPossibleValues, Token}, token_type::TokenType};
 
 pub enum Value {
     Boolean(bool),
@@ -63,7 +63,7 @@ impl Interpreter {
     
     fn handle_error_result(&self, e: Error) {
         match e.token {
-            Some(token) => parser_error(token, e.message),
+            Some(token) => runtime_error(token, e.message),
             None => panic!("{}", e.message),
         }
     }    

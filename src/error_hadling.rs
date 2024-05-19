@@ -1,9 +1,17 @@
 use crate::{token::Token, token_type::TokenType};
 
 pub static mut HAD_ERROR: bool = false;
+pub static mut HAD_RUNTIME_ERROR: bool = false;
 
 pub fn error(line: i32, message: &str) {
     report(line, "", message);
+}
+
+pub fn runtime_error(token: Token, message: String) {
+    println!("{} \n[line {}]", message, token.get_line());
+    unsafe {
+        HAD_RUNTIME_ERROR = true;
+    }
 }
 
 pub fn report(line: i32, where_err: &str, message: &str) {

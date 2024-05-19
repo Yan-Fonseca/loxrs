@@ -40,12 +40,6 @@ fn run_file(path: &str) -> io::Result<()> {
 
     run(content);
 
-    unsafe {
-        if error_hadling::HAD_ERROR {
-            std::process::exit(0);
-        }
-    }
-
     Ok(())
 }
 
@@ -101,6 +95,12 @@ fn run(input: &str) {
             ast.print(val);
         },
         None => {println!("Ocorreu algum erro no processo!")}
+    }
+
+    unsafe {
+        if error_hadling::HAD_ERROR || error_hadling::HAD_RUNTIME_ERROR {
+            std::process::exit(0);
+        }
     }
     
 }
