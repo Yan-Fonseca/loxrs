@@ -204,7 +204,7 @@ impl Parser {
         "Parser ERROR".to_string()
     }
 
-    fn syncronize(&mut self) {
+    fn _syncronize(&mut self) {
         self.advance();
 
         while !self.is_at_end() {

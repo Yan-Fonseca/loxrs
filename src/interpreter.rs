@@ -1,4 +1,4 @@
-use crate::{error_hadling::{parser_error, runtime_error}, expr::*, token::{LiteralPossibleValues, Token}, token_type::TokenType};
+use crate::{error_hadling::runtime_error, expr::*, token::{LiteralPossibleValues, Token}, token_type::TokenType};
 
 pub enum Value {
     Boolean(bool),
@@ -118,6 +118,18 @@ impl Interpreter {
                     },
                     None => {
                         let error_value = Error::new(Some(val.get_value()), "[ERROR] The Token is a Number, but his value is nil.".to_string());
+                        return Err(error_value);
+                    }
+                };
+            },
+
+            TokenType::String => {
+                match val.get_value().get_literal() {
+                    Some(value) => {
+                        return Ok(Some(Value::Literal(value)))
+                    },
+                    None => {
+                        let error_value = Error::new(Some(val.get_value()), "[ERROR] The Token is a String, but his value is nil.".to_string());
                         return Err(error_value);
                     }
                 };

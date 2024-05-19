@@ -13,9 +13,13 @@ use std::io::Write;
 use std::fs;
 use std::str;
 
-use ast_printer::AstPrinter;
+//use ast_printer::AstPrinter;
+use error_hadling::HAD_ERROR;
+use interpreter::Interpreter;
 use parser::Parser;
 use scanner::Scanner;
+
+static mut INTERPRETER: Interpreter = Interpreter;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -39,6 +43,12 @@ fn run_file(path: &str) -> io::Result<()> {
     let content = str::from_utf8(&bytes).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
     run(content);
+
+    unsafe {
+        if error_hadling::HAD_ERROR || error_hadling::HAD_RUNTIME_ERROR {
+            std::process::exit(0);
+        }
+    }
 
     Ok(())
 }
@@ -89,18 +99,14 @@ fn run(input: &str) {
 
     let expression = parser.parser();
 
-    match expression {
-        Some(val) => {
-            let ast = AstPrinter::new();
-            ast.print(val);
-        },
-        None => {println!("Ocorreu algum erro no processo!")}
+    if unsafe { HAD_ERROR } {
+        return;
     }
 
-    unsafe {
-        if error_hadling::HAD_ERROR || error_hadling::HAD_RUNTIME_ERROR {
-            std::process::exit(0);
-        }
+    match expression {
+        Some(val) => {
+            unsafe { INTERPRETER.interpret(val) };
+        },
+        None => {println!("There was an error in the process!")}
     }
-    
 }
