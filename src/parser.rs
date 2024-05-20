@@ -1,6 +1,7 @@
 use crate::token::Token;
 use crate::token_type::TokenType;
 use crate::expr::*;
+use crate::stmt::*;
 use crate::error_hadling::parser_error;
 
 pub struct Parser {
@@ -17,10 +18,86 @@ impl Parser {
         }
     }
 
-    pub fn parser(&mut self) -> Option<Expr> {
-        match self.expression() {
-            Ok(value) => Some(value),
-            Err(_) => None,
+    pub fn parser(&mut self) -> Vec<Stmt> {
+        let mut statements: Vec<Stmt> = Vec::new();
+
+        while !self.is_at_end() {
+            let stmt = self.declaration();
+            match stmt {
+                Ok(value) => {
+                    if let Some(val) = value {
+                        statements.push(val);
+                    }
+                },
+                Err(e) => println!("{}", e),
+            }
+        }
+
+        statements
+    }
+
+    fn declaration(&mut self) -> Result<Option<Stmt>, String> {
+        let result = self.declaration_aux();
+
+        match result {
+            Ok(value) => Ok(value),
+            Err(_) => {
+                self.syncronize();
+                return Ok(None);
+            },
+        }
+    }
+
+    fn declaration_aux(&mut self) -> Result<Option<Stmt>, String> {
+        if self.match_signal(&vec![TokenType::Var]) {
+            return self.var_declaration();
+        }
+        return self.statement();
+    }
+
+    fn var_declaration(&mut self) -> Result<Option<Stmt>, String> {
+        let name = self.consume(TokenType::Identifier, "Expect variable name.".to_string())?;
+
+        let mut initializer: Option<Expr> = None;
+
+        if self.match_signal(&vec![TokenType::Equal]) {
+            let aux = self.expression()?;
+            initializer = Some(aux);
+        }
+
+        let _ = self.consume(TokenType::Semicolon, "Expect ';' after variable declaration.".to_string());
+
+        Ok(Some(Stmt::Var(name, initializer)))
+    }
+
+    fn statement(&mut self) -> Result<Option<Stmt>, String> {
+        let _types = &vec![TokenType::Print];
+        if self.match_signal(_types) {
+            return self.print_statement();
+        }
+
+        self.expression_statement()
+    }
+
+    fn print_statement(&mut self) -> Result<Option<Stmt>, String> {
+        let value = self.expression();
+        match value {
+            Ok(val) => {
+                let _ = self.consume(TokenType::Semicolon, "Expect ';' after value.".to_string());
+                return Ok(Some(Stmt::Print(val)));
+            },
+            Err(e) => Err(e),
+        }
+    }
+
+    fn expression_statement(&mut self) -> Result<Option<Stmt>, String> {
+        let value = self.expression();
+        match value {
+            Ok(expr) => {
+                let _ = self.consume(TokenType::Semicolon, "Expect ';' after expression.".to_string());
+                return Ok(Some(Stmt::Expr(expr)));
+            },
+            Err(e) => Err(e),
         }
     }
 
@@ -146,6 +223,10 @@ impl Parser {
             return Ok(Expr::Grouping(Some(Grouping::new(expression))));
         }
 
+        if self.match_signal(&vec![TokenType::Identifier]) {
+            return Ok(Expr::Variable(Some(Variable::new(self.previous()))));
+        }
+
         Err(self.error(self.peek(), "Expect expression.".to_string()))
 
     }
@@ -204,7 +285,7 @@ impl Parser {
         "Parser ERROR".to_string()
     }
 
-    fn _syncronize(&mut self) {
+    fn syncronize(&mut self) {
         self.advance();
 
         while !self.is_at_end() {

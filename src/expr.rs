@@ -6,6 +6,7 @@ pub enum Expr {
     Grouping(Option<Grouping>),
     Unary(Option<Unary>),
     Binary(Option<Binary>),
+    Variable(Option<Variable>)
 }
 
 #[derive(Clone)]
@@ -85,6 +86,23 @@ pub struct Literal {
 impl Literal {
     pub fn new(value: Token) -> Self {
         Literal {
+            value
+        }
+    }
+
+    pub fn get_value(&self) -> Token {
+        self.value.clone()
+    }
+}
+
+#[derive(Clone)]
+pub struct Variable {
+    value: Token
+}
+
+impl Variable {
+    pub fn new(value: Token) -> Self {
+        Variable {
             value
         }
     }

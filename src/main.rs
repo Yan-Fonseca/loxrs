@@ -6,6 +6,8 @@ pub mod expr;
 pub mod ast_printer;
 pub mod parser;
 pub mod interpreter;
+pub mod stmt;
+pub mod environment;
 
 use std::env;
 use std::io;
@@ -13,13 +15,11 @@ use std::io::Write;
 use std::fs;
 use std::str;
 
-//use ast_printer::AstPrinter;
 use error_hadling::HAD_ERROR;
 use interpreter::Interpreter;
 use parser::Parser;
 use scanner::Scanner;
 
-static mut INTERPRETER: Interpreter = Interpreter;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -29,7 +29,6 @@ fn main() {
         std::process::exit(0);
     }
     else if args.len() == 2{
-        println!("Argumento: {}", args[1]);
         let _ = run_file(&args[1]);
     }
     else {
@@ -42,7 +41,9 @@ fn run_file(path: &str) -> io::Result<()> {
 
     let content = str::from_utf8(&bytes).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-    run(content);
+    let mut interpreter: Interpreter = Interpreter::new();
+
+    run(content, &mut interpreter);
 
     unsafe {
         if error_hadling::HAD_ERROR || error_hadling::HAD_RUNTIME_ERROR {
@@ -57,6 +58,8 @@ fn run_file(path: &str) -> io::Result<()> {
 fn run_prompt() {
     let stdin = io::stdin();
     let mut buffer = String::new();
+
+    let mut interpreter: Interpreter = Interpreter::new();
 
     loop {
         print!("> ");
@@ -76,7 +79,7 @@ fn run_prompt() {
                     continue;
                 }
 
-                run(input);
+                run(input, &mut interpreter);
 
                 unsafe {
                     error_hadling::HAD_ERROR = false;
@@ -90,23 +93,18 @@ fn run_prompt() {
     }
 }
 
-fn run(input: &str) {
+fn run(input: &str, interpreter: &mut Interpreter) {
     let mut scanner = Scanner::new(input.to_string());
 
     let tokens = scanner.scan_tokens();
 
     let mut parser = Parser::new(tokens.to_vec());
 
-    let expression = parser.parser();
+    let statements = parser.parser();
 
     if unsafe { HAD_ERROR } {
         return;
     }
 
-    match expression {
-        Some(val) => {
-            unsafe { INTERPRETER.interpret(val) };
-        },
-        None => {println!("There was an error in the process!")}
-    }
+    interpreter.interpret(statements);
 }

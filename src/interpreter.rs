@@ -1,4 +1,9 @@
-use crate::{error_hadling::runtime_error, expr::*, token::{LiteralPossibleValues, Token}, token_type::TokenType};
+use crate::token_type::TokenType;
+use crate::token::{LiteralPossibleValues, Token};
+use crate::environment::Environment;
+use crate::error_hadling::runtime_error;
+use crate::expr::*;
+use crate::stmt::Stmt;
 
 pub enum Value {
     Boolean(bool),
@@ -19,19 +24,32 @@ impl Error {
     }
 }
 
-pub struct Interpreter;
+pub struct Interpreter{
+    pub environment: Environment
+}
 
 impl Interpreter {
     pub fn new() -> Self {
-        Interpreter
+        Interpreter {
+            environment: Environment::new()
+        }
     }
 
-    pub fn interpret(&self, expression: Expr) {
-        let result = self.get_expression_value(expression);
-    
-        match result {
-            Ok(value) => self.handle_ok_result(value),
-            Err(e) => self.handle_error_result(e),
+    pub fn interpret(&mut self, statements: Vec<Stmt>) {
+        for statement in statements {
+            match statement {
+                Stmt::Expr(_) => {},
+                Stmt::Print(expr) => {
+                    let result = self.get_expression_value(expr);
+                    match result {
+                        Ok(value) => self.handle_ok_result(value),
+                        Err(e) => self.handle_error_result(e),
+                    }
+                },
+                Stmt::Var(name, value) => {
+                    self.environment.define(name.get_lexeme(), value);
+                },
+            }
         }
     }
     
@@ -106,6 +124,15 @@ impl Interpreter {
                     return Err(error_value);
                 }
             }
+            Expr::Variable(value) => {
+                if let Some(val) = value {
+                    return self.get_variable_value(val);
+                }
+                else {
+                    let error_value = Error::new(None, "[ERROR] Binary expression does not exist".to_string());
+                    return Err(error_value);
+                }
+            },
         }
     }
 
@@ -148,6 +175,17 @@ impl Interpreter {
             }
 
             _ => return Err(Error::new(Some(val.get_value()), "[ERROR] The Token is not a literal.".to_string())),
+        }
+    }
+
+    fn get_variable_value(&self, variable: Variable) -> Result<Option<Value>, Error> {
+        let result = self.environment.get(variable.get_value());
+        
+        match result {
+            Ok(value) => {
+                self.get_expression_value(value)
+            },
+            Err(e) => Err(Error::new(Some(variable.get_value()), format!("{}",e))),
         }
     }
 

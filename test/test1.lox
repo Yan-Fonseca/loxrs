@@ -1,8 +1,3 @@
-/*
- * Calculating the circles area
- * @param {radius : double} 
-*/
-
-fun circles_area(radius) {
-    return radius * radius * 3.14;
-}
+print "Hello World!";
+print 2 + 2 * 3;
+print true;

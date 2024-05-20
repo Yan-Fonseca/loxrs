@@ -70,6 +70,7 @@ impl AstPrinter {
                     return "[ERROR]".to_string();
                 }
             },
+            _ => "Variables does not implemented yet".to_string()
         }
     }
 
