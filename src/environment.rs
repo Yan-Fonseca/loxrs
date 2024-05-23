@@ -33,4 +33,16 @@ impl Environment {
             None => Err(format!("[ERROR] {} is not defined!", name.get_lexeme())),
         }
     }
+
+    pub fn assign(&mut self, name: String, data: Option<Expr>) -> Result<(),String> {
+        let value = self.values.get(&name);
+
+        match value {
+            Some(_) => {
+                self.values.insert(name, data);
+                return Ok(());
+            },
+            None => Err(format!("[ERROR] {} is not defined!", name)),
+        }
+    }
 }

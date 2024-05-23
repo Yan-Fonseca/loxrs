@@ -38,7 +38,23 @@ impl Interpreter {
     pub fn interpret(&mut self, statements: Vec<Stmt>) {
         for statement in statements {
             match statement {
-                Stmt::Expr(_) => {},
+                Stmt::Expr(expr) => {
+                    match expr {
+                        Expr::Assign(value) => {
+                            if let Some(assign) = value {
+                                let result =*assign.get_expression();
+
+                                let result = self.environment.assign(assign.get_value().get_lexeme(), Some(result));
+
+                                match result {
+                                    Ok(_) => {},
+                                    Err(e) => runtime_error(assign.get_value(), e),
+                                }
+                            }
+                        },
+                        _ => {}
+                    }
+                },
                 Stmt::Print(expr) => {
                     let result = self.get_expression_value(expr);
                     match result {
@@ -129,10 +145,19 @@ impl Interpreter {
                     return self.get_variable_value(val);
                 }
                 else {
-                    let error_value = Error::new(None, "[ERROR] Binary expression does not exist".to_string());
+                    let error_value = Error::new(None, "[ERROR] Variable expression error".to_string());
                     return Err(error_value);
                 }
             },
+            Expr::Assign(value) => {
+                if let Some(val) = value {
+                    return self.get_assign_value(val);
+                }
+                else {
+                    let error_value = Error::new(None, "[ERROR] Assign expression error".to_string());
+                    return Err(error_value);
+                }
+            }
         }
     }
 
@@ -186,6 +211,17 @@ impl Interpreter {
                 self.get_expression_value(value)
             },
             Err(e) => Err(Error::new(Some(variable.get_value()), format!("{}",e))),
+        }
+    }
+
+    fn get_assign_value(&self, assign: Assign) -> Result<Option<Value>, Error> {
+        let result = self.environment.get(assign.get_value());
+        
+        match result {
+            Ok(value) => {
+                self.get_expression_value(value)
+            },
+            Err(e) => Err(Error::new(Some(assign.get_value()), format!("{}",e))),
         }
     }
 

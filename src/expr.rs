@@ -6,7 +6,8 @@ pub enum Expr {
     Grouping(Option<Grouping>),
     Unary(Option<Unary>),
     Binary(Option<Binary>),
-    Variable(Option<Variable>)
+    Variable(Option<Variable>),
+    Assign(Option<Assign>)
 }
 
 #[derive(Clone)]
@@ -109,5 +110,28 @@ impl Variable {
 
     pub fn get_value(&self) -> Token {
         self.value.clone()
+    }
+}
+
+#[derive(Clone)]
+pub struct Assign {
+    value: Token,
+    expression: Box<Expr>
+}
+
+impl Assign {
+    pub fn new(value: Token, expression: Box<Expr>) -> Self {
+        Assign {
+            value,
+            expression
+        }
+    }
+
+    pub fn get_value(&self) -> Token {
+        self.value.clone()
+    }
+
+    pub fn get_expression(&self) -> Box<Expr> {
+        self.expression.clone()
     }
 }
