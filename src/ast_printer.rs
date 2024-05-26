@@ -36,6 +36,11 @@ impl AstPrinter {
         self.parenthesize(expr.get_operator().get_lexeme(), &expression)
     }
 
+    pub fn print_assign_expr(&self, expr: Assign) -> String {
+        let expression = vec!(*expr.get_expression());
+        self.parenthesize("= ".to_string() + &expr.get_value().get_lexeme(), &expression)
+    }
+
     fn get_new_print(&self, expr: Expr) -> String {
         match expr {
             Expr::Literal(value) => {
@@ -70,7 +75,18 @@ impl AstPrinter {
                     return "[ERROR]".to_string();
                 }
             },
-            _ => "Variables does not implemented yet".to_string()
+            Expr::Variable(_) => {
+                return "Error".to_string();
+            },
+            Expr::Assign(value) => {
+                if let Some(val) = value {
+                    return self.print_assign_expr(val);
+                }
+                else {
+                    return "[ERROR]".to_string();
+                }
+            },
+            
         }
     }
 

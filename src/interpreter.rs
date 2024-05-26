@@ -39,20 +39,10 @@ impl Interpreter {
         for statement in statements {
             match statement {
                 Stmt::Expr(expr) => {
-                    match expr {
-                        Expr::Assign(value) => {
-                            if let Some(assign) = value {
-                                let result =*assign.get_expression();
-
-                                let result = self.environment.assign(assign.get_value().get_lexeme(), Some(result));
-
-                                match result {
-                                    Ok(_) => {},
-                                    Err(e) => runtime_error(assign.get_value(), e),
-                                }
-                            }
-                        },
-                        _ => {}
+                    let result = self.get_expression_value(expr);
+                    match result {
+                        Ok(_) => {},
+                        Err(e) => self.handle_error_result(e),
                     }
                 },
                 Stmt::Print(expr) => {
@@ -102,7 +92,7 @@ impl Interpreter {
         }
     }    
 
-    pub fn get_expression_value(&self, expression: Expr) -> Result<Option<Value>, Error> {
+    pub fn get_expression_value(&mut self, expression: Expr) -> Result<Option<Value>, Error> {
         match expression {
             Expr::Literal(value) => {
                 if let Some(val) = value {
@@ -203,7 +193,7 @@ impl Interpreter {
         }
     }
 
-    fn get_variable_value(&self, variable: Variable) -> Result<Option<Value>, Error> {
+    fn get_variable_value(&mut self, variable: Variable) -> Result<Option<Value>, Error> {
         let result = self.environment.get(variable.get_value());
         
         match result {
@@ -214,22 +204,61 @@ impl Interpreter {
         }
     }
 
-    fn get_assign_value(&self, assign: Assign) -> Result<Option<Value>, Error> {
+    fn get_assign_value(&mut self, assign: Assign) -> Result<Option<Value>, Error> {
         let result = self.environment.get(assign.get_value());
         
         match result {
-            Ok(value) => {
-                self.get_expression_value(value)
+            Ok(_) => {
+                let final_expression = self.get_final_expression_in_assign(*assign.get_expression())?;
+
+                let result = self.environment.assign(assign.get_value().get_lexeme(), Some(final_expression.clone()));
+
+                match result {
+                    Ok(_) => {},
+                    Err(e) => return Err(Error::new(Some(assign.get_value()), format!("{}",e))),
+                }
+
+                let expression_result = self.get_expression_value(*assign.get_expression())?;
+
+                return Ok(expression_result);
             },
             Err(e) => Err(Error::new(Some(assign.get_value()), format!("{}",e))),
         }
     }
 
-    fn get_group(&self, group: Grouping) -> Result<Option<Value>, Error> {
+    fn get_final_expression_in_assign(&self, expression: Expr) -> Result<Expr, Error> {
+        match expression {
+            Expr::Variable(variable_value) => {
+                match variable_value {
+                    Some(value) => {
+                        let result = self.environment.get(value.get_value());
+                        match result {
+                            Ok(expression_value) => {
+                                return Ok(expression_value);
+                            },
+                            Err(e) => Err(Error::new(Some(value.get_value()), e)),
+                        }
+                    },
+                    None => Err(Error::new(None, "[ERROR] There is no variable expression to interpret".to_string())),
+                }
+            },
+            Expr::Assign(assign_value) => {
+                match assign_value {
+                    Some(value) => {
+                        return Ok(self.get_final_expression_in_assign(*value.get_expression())?);
+                    },
+                    None => Err(Error::new(None, "[ERROR] There is no assign expression to interpret".to_string())),
+                }
+            },
+            _ => Ok(expression),
+        }
+    }
+
+    fn get_group(&mut self, group: Grouping) -> Result<Option<Value>, Error> {
         return self.get_expression_value(*group.get_expression().clone());
     }
 
-    fn get_unary(&self, expression: Unary) -> Result<Option<Value>, Error> {
+    fn get_unary(&mut self, expression: Unary) -> Result<Option<Value>, Error> {
         let expression_result = self.get_expression_value(*expression.get_expression().clone())?;
         let operator = expression.get_operator().get_token_type();
 
@@ -270,7 +299,7 @@ impl Interpreter {
         }
     }
 
-    fn get_binary_expression_result_value(&self, value: Binary) -> Result<Option<Value>, Error> {
+    fn get_binary_expression_result_value(&mut self, value: Binary) -> Result<Option<Value>, Error> {
         let left = self.get_expression_value(*value.get_left().clone())?;
         let right = self.get_expression_value(*value.get_right().clone())?;
         let operator = value.get_operator().get_token_type();
