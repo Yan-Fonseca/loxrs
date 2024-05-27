@@ -211,7 +211,12 @@ impl Interpreter {
         
         match result {
             Ok(value) => {
-                self.get_expression_value(value)
+                match value {
+                    Some(val) => {
+                        self.get_expression_value(val)
+                    },
+                    None => Err(Error::new(Some(variable.get_value()), format!("[ERROR] Variable {} is not defined!", variable.get_value().get_lexeme()))),
+                }
             },
             Err(e) => Err(Error::new(Some(variable.get_value()), format!("{}",e))),
         }
@@ -247,7 +252,7 @@ impl Interpreter {
                         let result = self.environment.get(value.get_value());
                         match result {
                             Ok(expression_value) => {
-                                return Ok(expression_value);
+                                return Ok(expression_value.unwrap());
                             },
                             Err(e) => Err(Error::new(Some(value.get_value()), e)),
                         }

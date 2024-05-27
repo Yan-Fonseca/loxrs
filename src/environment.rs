@@ -33,7 +33,7 @@ impl Environment {
         self.values.insert(name, value);
     }
 
-    pub fn get(&self, name: Token) -> Result<Expr, String> {
+    pub fn get(&self, name: Token) -> Result<Option<Expr>, String> {
         let value = self.values.get(&name.get_lexeme());
 
         let enclosing_value = self.get_enclosing();
@@ -42,9 +42,9 @@ impl Environment {
             Some(expr) => {
                 match expr.clone() {
                     Some(expression_value) => {
-                        return Ok(expression_value);
+                        return Ok(Some(expression_value));
                     },
-                    None => return Err(format!("[ERROR] Variable {} is not defined!", name.get_lexeme())),
+                    None => return Ok(None),
                 }
             },
             None => {},
