@@ -1,0 +1,13 @@
+var nome = "Yan";
+var sobrenome = " Fonseca";
+
+print nome + sobrenome;
+
+{
+    var nome = "Eduarda";
+    print nome + sobrenome;
+    nome = "Manoela";
+    print nome;
+}
+
+print nome + sobrenome;
