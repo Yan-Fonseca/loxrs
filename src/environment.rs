@@ -63,6 +63,20 @@ impl Environment {
     pub fn assign(&mut self, name: String, data: Option<Expr>) -> Result<(),String> {
         let value = self.values.get(&name);
 
+        let enclosing_value = self.get_enclosing();
+
+        match enclosing_value {
+            Some(reference) => {
+                let mut enclosing = *reference;
+                let res = enclosing.assign(name.clone(), data.clone());
+
+                if let Ok(_) = res {
+                    return Ok(());
+                }
+            },
+            None => {},
+        }
+
         match value {
             Some(_) => {
                 self.values.insert(name, data);
