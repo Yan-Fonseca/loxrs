@@ -5,7 +5,7 @@ use crate::token::Token;
 
 #[derive(Clone)]
 pub struct Environment {
-    enclosing: Option<Box<Environment>>,
+    pub enclosing: Option<Box<Environment>>,
     pub values: HashMap<String, Option<Expr>>
 }
 
@@ -17,9 +17,12 @@ impl Environment {
         }
     }
 
-    pub fn set_enclosing_environment(&mut self, environment: Environment) {
-        let reference = Box::new(environment);
-        self.enclosing = Some(reference);
+    pub fn set_enclosing_environment(&mut self, environment: Option<Environment>) {
+        if let Some(env) = environment {
+            let reference = Box::new(env);
+            self.enclosing = Some(reference);
+        }
+        self.enclosing = None;
     }
 
     fn get_enclosing(&self) -> Option<Box<Environment>> {
@@ -35,28 +38,31 @@ impl Environment {
 
         let enclosing_value = self.get_enclosing();
 
-        match enclosing_value {
-            Some(reference) => {
-                let enclosing = *reference;
-                let val = enclosing.get(name.clone());
-                
-                if let Ok(result_value) = val {
-                    return Ok(result_value);
+        match value {
+            Some(expr) => {
+                match expr.clone() {
+                    Some(expression_value) => {
+                        return Ok(expression_value);
+                    },
+                    None => return Err(format!("[ERROR] Variable {} is not defined!", name.get_lexeme())),
                 }
             },
             None => {},
         }
 
-        match value {
-            Some(expr) => {
-                match expr.clone() {
-                    Some(expression_value) => {
-                        Ok(expression_value)
+        match enclosing_value {
+            Some(reference) => {
+                let enclosing = *reference;
+                let val = enclosing.get(name.clone());
+                
+                match val {
+                    Ok(result_value) => {
+                        return Ok(result_value);
                     },
-                    None => Err(format!("[ERROR] Variable {} is not defined!", name.get_lexeme())),
+                    Err(e) => return Err(e),
                 }
             },
-            None => Err(format!("[ERROR] {} is not defined!", name.get_lexeme())),
+            None => return Err(format!("[ERROR] {} is not defined!", name.get_lexeme())),
         }
     }
 
@@ -64,6 +70,14 @@ impl Environment {
         let value = self.values.get(&name);
 
         let enclosing_value = self.get_enclosing();
+
+        match value {
+            Some(_) => {
+                self.values.insert(name, data);
+                return Ok(());
+            },
+            None => {},
+        }
 
         match enclosing_value {
             Some(reference) => {
@@ -77,12 +91,6 @@ impl Environment {
             None => {},
         }
 
-        match value {
-            Some(_) => {
-                self.values.insert(name, data);
-                return Ok(());
-            },
-            None => Err(format!("[ERROR] {} is not defined!", name)),
-        }
+        Err(format!("[ERROR] {} is not defined!", name))
     }
 }
