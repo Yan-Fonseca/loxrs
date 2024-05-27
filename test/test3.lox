@@ -1,13 +1,19 @@
-var nome = "Yan";
-var sobrenome = " Fonseca";
-
-print nome + sobrenome;
-
+var a = "global a";
+var b = "global b";
+var c = "global c";
 {
-    var nome = "Eduarda";
-    print nome + sobrenome;
-    nome = "Manoela";
-    print nome;
+  var a = "outer a";
+  var b = "outer b";
+  {
+    var a = "inner a";
+    print a;
+    print b;
+    print c;
+  }
+  print a;
+  print b;
+  print c;
 }
-
-print nome + sobrenome;
+print a;
+print b;
+print c;
