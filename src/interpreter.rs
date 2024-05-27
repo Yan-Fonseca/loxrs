@@ -45,6 +45,9 @@ impl Interpreter {
                         Err(e) => self.handle_error_result(e),
                     }
                 },
+                Stmt::Block(block) => {
+                    self.execute_block(block, self.environment.clone());
+                },
                 Stmt::Print(expr) => {
                     let result = self.get_expression_value(expr);
                     match result {
@@ -90,7 +93,17 @@ impl Interpreter {
             Some(token) => runtime_error(token, e.message),
             None => panic!("{}", e.message),
         }
-    }    
+    }
+
+    fn execute_block(&mut self, block: Vec<Stmt>, enclosing: Environment) {
+        let previous = self.environment.clone();
+        self.environment = enclosing.clone();
+        self.environment.set_enclosing_environment(Some(previous.clone()));
+
+        self.interpret(block);
+
+        self.environment = previous;
+    }
 
     pub fn get_expression_value(&mut self, expression: Expr) -> Result<Option<Value>, Error> {
         match expression {
