@@ -3,15 +3,27 @@ use std::collections::HashMap;
 use crate::expr::Expr;
 use crate::token::Token;
 
+#[derive(Clone)]
 pub struct Environment {
+    enclosing: Option<Box<Environment>>,
     pub values: HashMap<String, Option<Expr>>
 }
 
 impl Environment {
     pub fn new() -> Self {
         Environment {
+            enclosing: None,
             values: HashMap::new(),
         }
+    }
+
+    pub fn set_enclosing_environment(&mut self, environment: Environment) {
+        let reference = Box::new(environment);
+        self.enclosing = Some(reference);
+    }
+
+    fn get_enclosing(&self) -> Option<Box<Environment>> {
+        self.enclosing.clone()
     }
 
     pub fn define(&mut self, name: String, value: Option<Expr>) {
@@ -20,6 +32,20 @@ impl Environment {
 
     pub fn get(&self, name: Token) -> Result<Expr, String> {
         let value = self.values.get(&name.get_lexeme());
+
+        let enclosing_value = self.get_enclosing();
+
+        match enclosing_value {
+            Some(reference) => {
+                let enclosing = *reference;
+                let val = enclosing.get(name.clone());
+                
+                if let Ok(result_value) = val {
+                    return Ok(result_value);
+                }
+            },
+            None => {},
+        }
 
         match value {
             Some(expr) => {
