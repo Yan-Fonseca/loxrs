@@ -71,6 +71,11 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Option<Stmt>, String> {
+        let _types = &vec![TokenType::If];
+        if self.match_signal(_types) {
+            return self.if_statement();
+        }
+
         let _types = &vec![TokenType::Print];
         if self.match_signal(_types) {
             return self.print_statement();
@@ -80,6 +85,29 @@ impl Parser {
         }
 
         self.expression_statement()
+    }
+
+    fn if_statement(&mut self) -> Result<Option<Stmt>, String> {
+        let _ = self.consume(TokenType::LeftParen, "Expect '(' after 'if'.".to_string());
+        let condition = self.expression()?;
+        let _ = self.consume(TokenType::RightParen, "Expect ')' after if condition.".to_string());
+
+        let then_statement = self.statement()?.unwrap();
+
+        let mut else_branch: Option<Box<Stmt>> = None;
+        
+        if self.match_signal(&vec![TokenType::Else]) {
+            let result_value = self.statement()?;
+            match result_value {
+                Some(value) => {
+                    else_branch = Some(Box::new(value));
+                },
+                None => return Err("Expect statement after else.".to_string()),
+            }
+        }
+
+        Ok(Some(Stmt::If(condition, Box::new(then_statement), else_branch)))
+
     }
 
     fn print_statement(&mut self) -> Result<Option<Stmt>, String> {

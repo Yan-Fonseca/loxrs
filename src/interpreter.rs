@@ -45,6 +45,26 @@ impl Interpreter {
                         Err(e) => self.handle_error_result(e),
                     }
                 },
+                Stmt::If(condition, then_statement, else_statement) => {
+                    let result_condition_value = self.get_expression_value(condition);
+                    let mut condition_value: Option<Value> = None;
+
+                    match result_condition_value {
+                        Ok(value) => {
+                            condition_value = value;
+                        },
+                        Err(e) => self.handle_error_result(e),
+                    }
+
+                    if self.is_truthy(condition_value) {
+                        self.interpret(vec![*then_statement]);
+                    }
+                    else {
+                        if let Some(else_stmt) = else_statement {
+                            self.interpret(vec![*else_stmt]);
+                        }
+                    }
+                }
                 Stmt::Block(block) => {
                     self.execute_block(block, self.environment.clone());
                 },
