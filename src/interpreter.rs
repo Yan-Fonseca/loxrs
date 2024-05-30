@@ -5,6 +5,7 @@ use crate::error_hadling::runtime_error;
 use crate::expr::*;
 use crate::stmt::Stmt;
 
+#[derive(Clone)]
 pub enum Value {
     Boolean(bool),
     Literal(LiteralPossibleValues)
@@ -181,6 +182,15 @@ impl Interpreter {
                     return Err(error_value);
                 }
             }
+            Expr::Logical(value) => {
+                if let Some(val) = value {
+                    return self.get_logical_value(val);
+                }
+                else {
+                    let error_value = Error::new(None, "[ERROR] Logical expression error".to_string());
+                    return Err(error_value);
+                }
+            },
         }
     }
 
@@ -335,6 +345,28 @@ impl Interpreter {
             },
             None => false
         }
+    }
+
+    fn get_logical_value(&mut self, value:Logical) -> Result<Option<Value>, Error> {
+        let left = self.get_expression_value(*value.get_left().clone())?;
+        let right = self.get_expression_value(*value.get_right().clone())?;
+        let operator = value.get_operator().get_token_type();
+
+        match operator {
+            TokenType::Or => {
+                if self.is_truthy(left.clone()) {
+                    return Ok(left);
+                }
+            },
+            TokenType::And => {
+                if !self.is_truthy(left.clone()) {
+                    return Ok(left);
+                }
+            },
+            _ => return Err(Error::new(Some(value.get_operator()), "[ERROR] The Operator is not a logical operator.".to_string()))
+        }
+
+        Ok(right)
     }
 
     fn get_binary_expression_result_value(&mut self, value: Binary) -> Result<Option<Value>, Error> {

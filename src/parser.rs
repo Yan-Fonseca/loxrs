@@ -149,7 +149,7 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Expr, String> {
-        let expression = self.equality()?;
+        let expression = self.or()?;
 
         if self.match_signal(&vec![TokenType::Equal]) {
             let equals = self.previous();
@@ -166,6 +166,40 @@ impl Parser {
             }
 
             parser_error(equals, "Invalid assignment target.".to_string());
+        }
+
+        Ok(expression)
+    }
+
+    fn or(&mut self) -> Result<Expr, String> {
+        let mut expression = self.and()?;
+        let _type = vec![TokenType::Or];
+
+        while self.match_signal(&_type) {
+            let operator = self.previous();
+            let right = self.and()?;
+
+            let left_reference = Box::new(expression);
+            let right_reference = Box::new(right);
+
+            expression = Expr::Logical(Some(Logical::new(left_reference, operator, right_reference)));
+        }
+
+        Ok(expression)
+    }
+
+    fn and(&mut self) -> Result<Expr, String> {
+        let mut expression = self.equality()?;
+        let _type = vec![TokenType::And];
+
+        while self.match_signal(&_type) {
+            let operator = self.previous();
+            let right = self.equality()?;
+
+            let left_reference = Box::new(expression);
+            let right_reference = Box::new(right);
+
+            expression = Expr::Logical(Some(Logical::new(left_reference, operator, right_reference)));
         }
 
         Ok(expression)

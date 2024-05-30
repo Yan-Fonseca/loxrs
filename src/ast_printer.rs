@@ -86,7 +86,7 @@ impl AstPrinter {
                     return "[ERROR]".to_string();
                 }
             },
-            
+            _ => return "[ERROR]".to_string()
         }
     }
 

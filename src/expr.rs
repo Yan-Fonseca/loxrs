@@ -4,6 +4,7 @@ use crate::token::Token;
 pub enum Expr {
     Literal(Option<Literal>),
     Grouping(Option<Grouping>),
+    Logical(Option<Logical>),
     Unary(Option<Unary>),
     Binary(Option<Binary>),
     Variable(Option<Variable>),
@@ -20,6 +21,35 @@ pub struct Binary {
 impl Binary {
     pub fn new(left: Box<Expr>, operator: Token, right: Box<Expr>) -> Self {
         Binary {
+            left,
+            operator,
+            right
+        }
+    }
+
+    pub fn get_left(&self) -> Box<Expr> {
+        self.left.clone()
+    }
+
+    pub fn get_operator(&self) -> Token {
+        self.operator.clone()
+    }
+
+    pub fn get_right(&self) -> Box<Expr> {
+        self.right.clone()
+    }
+}
+
+#[derive(Clone)]
+pub struct Logical {
+    left: Box<Expr>,
+    operator: Token,
+    right: Box<Expr>
+}
+
+impl Logical {
+    pub fn new(left: Box<Expr>, operator: Token, right: Box<Expr>) -> Self {
+        Logical {
             left,
             operator,
             right
