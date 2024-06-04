@@ -1,0 +1,10 @@
+var result = 0;
+var three = 3;
+
+{
+    result = three + 1;
+    print result;
+    print three;
+}
+
+print result;

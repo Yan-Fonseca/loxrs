@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::token_type::TokenType;
 use crate::token::{LiteralPossibleValues, Token};
 use crate::environment::Environment;
@@ -57,7 +60,7 @@ impl Interpreter {
                         Err(e) => self.handle_error_result(e),
                     }
 
-                    if self.is_truthy(condition_value) {
+                    if self.is_truthy(&condition_value) {
                         self.interpret(vec![*then_statement]);
                     }
                     else {
@@ -65,9 +68,22 @@ impl Interpreter {
                             self.interpret(vec![*else_stmt]);
                         }
                     }
-                }
+                },
+                Stmt::While(condition, body) => {
+                    let expression_value = self.get_expression_value(condition);
+                    let body = *body;
+
+                    match expression_value {
+                        Ok(value) => {
+                            while self.is_truthy(&value) {
+                                self.interpret(vec![body.clone()]);
+                            }
+                        },
+                        Err(e) => self.handle_error_result(e),
+                    }
+                },
                 Stmt::Block(block) => {
-                    self.execute_block(block, self.environment.clone());
+                    self.execute_block(block);
                 },
                 Stmt::Print(expr) => {
                     let result = self.get_expression_value(expr);
@@ -116,14 +132,19 @@ impl Interpreter {
         }
     }
 
-    fn execute_block(&mut self, block: Vec<Stmt>, enclosing: Environment) {
-        let previous = self.environment.clone();
-        self.environment = enclosing.clone();
-        self.environment.set_enclosing_environment(Some(previous.clone()));
-
+    fn execute_block(&mut self, block: Vec<Stmt>) {
+        // Salva o ambiente atual em 'previous'
+        let previous = Rc::new(RefCell::new(self.environment.clone()));
+    
+        // Cria um novo ambiente e o define como o atual
+        self.environment = Environment::new();
+        self.environment.set_enclosing_environment(Some(Rc::clone(&previous)));
+    
+        // Interpreta o bloco de declarações
         self.interpret(block);
-
-        self.environment = previous;
+    
+        // Restaura o ambiente anterior
+        self.environment = previous.borrow().clone();
     }
 
     pub fn get_expression_value(&mut self, expression: Expr) -> Result<Option<Value>, Error> {
@@ -298,7 +319,88 @@ impl Interpreter {
                     None => Err(Error::new(None, "[ERROR] There is no assign expression to interpret".to_string())),
                 }
             },
-            _ => Ok(expression),
+            _ => {
+                return self.get_expression_tree_without_variables(expression)
+            },
+        }
+    }
+
+    fn get_expression_tree_without_variables(&self, expression: Expr) -> Result<Expr, Error> {
+        match expression.clone() {
+            Expr::Literal(_) => return Ok(expression),
+            Expr::Grouping(group) => {
+                if let Some(mut group_value) = group {
+                    let expression_group = *group_value.get_expression();
+                    let result = self.get_expression_tree_without_variables(expression_group)?;
+                    let result = Box::new(result);
+
+                    group_value.set_expression(result);
+                    return Ok(Expr::Grouping(Some(group_value)));
+                }
+                return Ok(expression);
+            },
+            Expr::Logical(logical) => {
+                if let Some(mut logical_value) = logical {
+                    let left = *logical_value.get_left();
+                    let left = self.get_expression_tree_without_variables(left)?;
+                    let result = Box::new(left);
+
+                    logical_value.set_left(result);
+
+                    let right = *logical_value.get_right();
+                    let right = self.get_expression_tree_without_variables(right)?;
+                    let result = Box::new(right);
+
+                    logical_value.set_right(result);
+
+                    return Ok(Expr::Logical(Some(logical_value)));
+                }
+                return Ok(expression);
+            },
+            Expr::Unary(unary) => {
+                if let Some(mut unary_value) = unary {
+                    let unary_expression = *unary_value.get_expression();
+                    let result = self.get_expression_tree_without_variables(unary_expression)?;
+                    let result = Box::new(result);
+
+                    unary_value.set_expression(result);
+                    return Ok(Expr::Unary(Some(unary_value)));
+                }
+                return Ok(expression);
+            },
+            Expr::Binary(binary) => {
+                if let Some(mut binary_value) = binary {
+                    let left = *binary_value.get_left();
+                    let left = self.get_expression_tree_without_variables(left)?;
+                    let result = Box::new(left);
+
+                    binary_value.set_left(result);
+
+                    let right = *binary_value.get_right();
+                    let right = self.get_expression_tree_without_variables(right)?;
+                    let result = Box::new(right);
+
+                    binary_value.set_right(result);
+
+                    return Ok(Expr::Binary(Some(binary_value)));
+                }
+                return Ok(expression);
+            },
+            Expr::Variable(variable_value) => {
+                match variable_value {
+                    Some(value) => {
+                        let result = self.environment.get(value.get_value());
+                        match result {
+                            Ok(expression_value) => {
+                                return Ok(expression_value.unwrap());
+                            },
+                            Err(e) => Err(Error::new(Some(value.get_value()), e)),
+                        }
+                    },
+                    None => Err(Error::new(None, "[ERROR] There is no variable expression to interpret".to_string())),
+                }
+            },
+            Expr::Assign(_) => return Ok(expression),
         }
     }
 
@@ -328,18 +430,18 @@ impl Interpreter {
             },
 
             TokenType::Bang => {
-                Ok(Some(Value::Boolean(!self.is_truthy(expression_result))))
+                Ok(Some(Value::Boolean(!self.is_truthy(&expression_result))))
             },
 
             _ => return Err(Error::new(Some(expression.get_operator()), "[ERROR] The token is unary, but do not have an unary operator!".to_string()))
         }
     }
 
-    fn is_truthy(&self, value: Option<Value>) -> bool {
+    fn is_truthy(&self, value: &Option<Value>) -> bool {
         match value {
             Some(val) => {
                 match val {
-                    Value::Boolean(value1) => value1,
+                    Value::Boolean(value1) => *value1,
                     Value::Literal(_) => true,
                 }
             },
@@ -354,12 +456,12 @@ impl Interpreter {
 
         match operator {
             TokenType::Or => {
-                if self.is_truthy(left.clone()) {
+                if self.is_truthy(&left) {
                     return Ok(left);
                 }
             },
             TokenType::And => {
-                if !self.is_truthy(left.clone()) {
+                if !self.is_truthy(&left) {
                     return Ok(left);
                 }
             },
