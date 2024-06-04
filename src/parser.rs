@@ -76,6 +76,11 @@ impl Parser {
             return self.if_statement();
         }
 
+        let _types = &vec![TokenType::While];
+        if self.match_signal(_types) {
+            return self.while_statement();
+        }
+
         let _types = &vec![TokenType::Print];
         if self.match_signal(_types) {
             return self.print_statement();
@@ -108,6 +113,16 @@ impl Parser {
 
         Ok(Some(Stmt::If(condition, Box::new(then_statement), else_branch)))
 
+    }
+
+    fn while_statement(&mut self) -> Result<Option<Stmt>, String> {
+        let _ = self.consume(TokenType::LeftParen, "Expect '(' after 'if'.".to_string());
+        let condition = self.expression()?;
+        let _ = self.consume(TokenType::RightParen, "Expect ')' after if condition.".to_string());
+
+        let while_statement = self.statement()?.unwrap();
+
+        Ok(Some(Stmt::While(condition, Box::new(while_statement))))
     }
 
     fn print_statement(&mut self) -> Result<Option<Stmt>, String> {

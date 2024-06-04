@@ -1,6 +1,6 @@
 use crate::token::Token;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Expr {
     Literal(Option<Literal>),
     Grouping(Option<Grouping>),
@@ -11,7 +11,7 @@ pub enum Expr {
     Assign(Option<Assign>)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Binary {
     left: Box<Expr>,
     operator: Token,
@@ -38,9 +38,17 @@ impl Binary {
     pub fn get_right(&self) -> Box<Expr> {
         self.right.clone()
     }
+
+    pub fn set_left(&mut self, left: Box<Expr>) {
+        self.left = left;
+    }
+
+    pub fn set_right(&mut self, right: Box<Expr>) {
+        self.right = right;
+    }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Logical {
     left: Box<Expr>,
     operator: Token,
@@ -67,9 +75,17 @@ impl Logical {
     pub fn get_right(&self) -> Box<Expr> {
         self.right.clone()
     }
+
+    pub fn set_left(&mut self, left: Box<Expr>) {
+        self.left = left;
+    }
+
+    pub fn set_right(&mut self, right: Box<Expr>) {
+        self.right = right;
+    }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Unary {
     operator: Token,
     expression: Box<Expr>,
@@ -90,9 +106,13 @@ impl Unary {
     pub fn get_expression(&self) -> Box<Expr> {
         self.expression.clone()
     }
+
+    pub fn set_expression(&mut self, expression: Box<Expr>) {
+        self.expression = expression;
+    }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Grouping {
     expression: Box<Expr>,
 }
@@ -107,9 +127,13 @@ impl Grouping {
     pub fn get_expression(&self) -> Box<Expr> {
         self.expression.clone()
     }
+
+    pub fn set_expression(&mut self, expression: Box<Expr>) {
+        self.expression = expression;
+    }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Literal {
     value: Token,
 }
@@ -126,7 +150,7 @@ impl Literal {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Variable {
     value: Token
 }
@@ -143,7 +167,7 @@ impl Variable {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Assign {
     value: Token,
     expression: Box<Expr>

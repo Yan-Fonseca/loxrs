@@ -38,7 +38,12 @@ impl AstPrinter {
 
     pub fn print_assign_expr(&self, expr: Assign) -> String {
         let expression = vec!(*expr.get_expression());
-        self.parenthesize("= ".to_string() + &expr.get_value().get_lexeme(), &expression)
+        self.parenthesize("(assign)= ".to_string() + &expr.get_value().get_lexeme(), &expression)
+    }
+
+    pub fn print_variable_expr(&self, expr: Variable) -> String {
+        let expression = expr.get_value();
+        return String::from(expression.get_lexeme());
     }
 
     fn get_new_print(&self, expr: Expr) -> String {
@@ -48,7 +53,7 @@ impl AstPrinter {
                     return self.print_literal_expr(val);
                 }
                 else {
-                    return "[ERROR]".to_string();
+                    return "[ERROR] Literal".to_string();
                 }
             },
             Expr::Binary(value) => {
@@ -56,7 +61,7 @@ impl AstPrinter {
                     return self.print_binary_expr(val);
                 }
                 else {
-                    return "[ERROR]".to_string();
+                    return "[ERROR] Binary".to_string();
                 }
             },
             Expr::Grouping(value) => {
@@ -64,7 +69,7 @@ impl AstPrinter {
                     return self.print_grouping_expr(val);
                 }
                 else {
-                    return "[ERROR]".to_string();
+                    return "[ERROR] Grouping".to_string();
                 }
             },
             Expr::Unary(value) => {
@@ -72,18 +77,23 @@ impl AstPrinter {
                     return self.print_unary_expr(val);
                 }
                 else {
-                    return "[ERROR]".to_string();
+                    return "[ERROR] Unary".to_string();
                 }
             },
-            Expr::Variable(_) => {
-                return "Error".to_string();
+            Expr::Variable(value) => {
+                if let Some(val) = value {
+                    return self.print_variable_expr(val);
+                }
+                else {
+                    return "[ERROR] Variable".to_string();
+                }
             },
             Expr::Assign(value) => {
                 if let Some(val) = value {
                     return self.print_assign_expr(val);
                 }
                 else {
-                    return "[ERROR]".to_string();
+                    return "[ERROR] Assign".to_string();
                 }
             },
             _ => return "[ERROR]".to_string()

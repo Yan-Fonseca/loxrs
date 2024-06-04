@@ -1,12 +1,14 @@
 use std::collections::HashMap;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use crate::expr::Expr;
 use crate::token::Token;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Environment {
-    pub enclosing: Option<Box<Environment>>,
-    pub values: HashMap<String, Option<Expr>>
+    pub enclosing: Option<Rc<RefCell<Environment>>>,
+    pub values: HashMap<String, Option<Expr>>,
 }
 
 impl Environment {
@@ -17,15 +19,18 @@ impl Environment {
         }
     }
 
-    pub fn set_enclosing_environment(&mut self, environment: Option<Environment>) {
-        if let Some(env) = environment {
-            let reference = Box::new(env);
-            self.enclosing = Some(reference);
+    pub fn new_with_enclosing(enclosing: Option<Rc<RefCell<Environment>>>) -> Self {
+        Environment {
+            enclosing,
+            values: HashMap::new(),
         }
-        self.enclosing = None;
     }
 
-    fn get_enclosing(&self) -> Option<Box<Environment>> {
+    pub fn set_enclosing_environment(&mut self, environment: Option<Rc<RefCell<Environment>>>) {
+        self.enclosing = environment;
+    }
+
+    pub fn get_enclosing(&self) -> Option<Rc<RefCell<Environment>>> {
         self.enclosing.clone()
     }
 
@@ -34,61 +39,25 @@ impl Environment {
     }
 
     pub fn get(&self, name: Token) -> Result<Option<Expr>, String> {
-        let value = self.values.get(&name.get_lexeme());
-
-        let enclosing_value = self.get_enclosing();
-
-        match value {
-            Some(expr) => {
-                match expr.clone() {
-                    Some(expression_value) => {
-                        return Ok(Some(expression_value));
-                    },
-                    None => return Ok(None),
-                }
-            },
-            None => {},
+        if let Some(value) = self.values.get(&name.get_lexeme()) {
+            return Ok(value.clone());
         }
 
-        match enclosing_value {
-            Some(reference) => {
-                let enclosing = *reference;
-                let val = enclosing.get(name.clone());
-                
-                match val {
-                    Ok(result_value) => {
-                        return Ok(result_value);
-                    },
-                    Err(e) => return Err(e),
-                }
-            },
-            None => return Err(format!("[ERROR] {} is not defined!", name.get_lexeme())),
+        if let Some(ref enclosing) = self.enclosing {
+            return enclosing.borrow().get(name);
         }
+
+        Err(format!("[ERROR] {} is not defined!", name.get_lexeme()))
     }
 
-    pub fn assign(&mut self, name: String, data: Option<Expr>) -> Result<(),String> {
-        let value = self.values.get(&name);
-
-        let enclosing_value = self.get_enclosing();
-
-        match value {
-            Some(_) => {
-                self.values.insert(name, data);
-                return Ok(());
-            },
-            None => {},
+    pub fn assign(&mut self, name: String, data: Option<Expr>) -> Result<(), String> {
+        if self.values.contains_key(&name) {
+            self.values.insert(name, data);
+            return Ok(());
         }
 
-        match enclosing_value {
-            Some(reference) => {
-                let mut enclosing = *reference;
-                let res = enclosing.assign(name.clone(), data.clone());
-
-                if let Ok(_) = res {
-                    return Ok(());
-                }
-            },
-            None => {},
+        if let Some(ref enclosing) = self.enclosing {
+            return enclosing.borrow_mut().assign(name, data);
         }
 
         Err(format!("[ERROR] {} is not defined!", name))
