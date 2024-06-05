@@ -99,21 +99,9 @@ fn run(input: &str, interpreter: &mut Interpreter) {
 
     let tokens = scanner.scan_tokens();
 
-    //let ast = AstPrinter::new();
-
     let mut parser = Parser::new(tokens.to_vec());
 
     let statements = parser.parser();
-
-    // for statement in statements {
-    //     match statement {
-    //         stmt::Stmt::Expr(expression) => {
-    //             ast.print(expression);
-    //             print!("\n");
-    //         },
-    //         _ => println!("-----"),
-    //     }
-    // }
 
     if unsafe { HAD_ERROR } {
         return;
