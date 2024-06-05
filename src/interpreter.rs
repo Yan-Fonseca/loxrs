@@ -70,13 +70,23 @@ impl Interpreter {
                     }
                 },
                 Stmt::While(condition, body) => {
-                    let expression_value = self.get_expression_value(condition);
+                    let expression_value = self.get_expression_value(condition.clone());
                     let body = *body;
 
                     match expression_value {
                         Ok(value) => {
-                            while self.is_truthy(&value) {
+                            let mut value = self.is_truthy(&value);
+                            while value {
                                 self.interpret(vec![body.clone()]);
+                                let new_value = self.get_expression_value(condition.clone());
+                                match new_value {
+                                    Ok(val) => {
+                                        let new_value = val;
+                                        value = self.is_truthy(&new_value);
+                                    },
+                                    Err(e) => self.handle_error_result(e),
+                                }
+                                
                             }
                         },
                         Err(e) => self.handle_error_result(e),
