@@ -71,6 +71,11 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Option<Stmt>, String> {
+        let _types = &vec![TokenType::For];
+        if self.match_signal(_types) {
+            return self.for_statement();
+        }
+
         let _types = &vec![TokenType::If];
         if self.match_signal(_types) {
             return self.if_statement();
@@ -90,6 +95,55 @@ impl Parser {
         }
 
         self.expression_statement()
+    }
+
+    fn for_statement(&mut self) -> Result<Option<Stmt>, String> {
+        let _ = self.consume(TokenType::LeftParen, "Expect '(' after 'for'.".to_string());
+
+        let initialize: Option<Stmt>;
+
+        if self.match_signal(&vec![TokenType::Semicolon]) {
+            initialize = None;
+        }
+        else if self.match_signal(&vec![TokenType::Var]) {
+            initialize = self.var_declaration()?;
+        }
+        else {
+            initialize = self.expression_statement()?;
+        }
+
+        let mut condition: Option<Expr> = None;
+
+        if !self.check(TokenType::Semicolon) {
+            condition = Some(self.expression()?);
+        }
+
+        let _ = self.consume(TokenType::Semicolon, "Expect ';' after loop condition.".to_string());
+
+        let mut increment: Option<Expr> = None;
+        if !self.check(TokenType::RightParen) {
+            increment = Some(self.expression()?);
+        }
+
+        let _ = self.consume(TokenType::RightParen, "Expect ')' after for clauses.".to_string());
+
+        let mut body: Option<Stmt> = self.statement()?;
+
+        if let Some(increment_value) = increment {
+            body = Some(Stmt::Block(vec![body.unwrap(), Stmt::Expr(increment_value)]));
+        }
+
+        if let None = condition {
+            condition = Some(Expr::Literal(Some(Literal::new(Token::new(TokenType::True, "true".to_string(), None, self.previous().get_line())))));
+        }
+
+        body = Some(Stmt::While(condition.unwrap(), Box::new(body.unwrap())));
+
+        if let Some(initialize_value) = initialize {
+            body = Some(Stmt::Block(vec![initialize_value, body.unwrap()]));
+        }
+
+        Ok(body)
     }
 
     fn if_statement(&mut self) -> Result<Option<Stmt>, String> {
